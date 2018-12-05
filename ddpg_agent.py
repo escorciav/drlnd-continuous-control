@@ -1,6 +1,5 @@
 import numpy as np
 import random
-import copy
 from collections import namedtuple, deque
 
 from model import Actor, Critic
@@ -52,9 +51,11 @@ class Agent():
         self.memory = ReplayBuffer(action_size, BUFFER_SIZE, BATCH_SIZE, random_seed)
     
     def step(self, state, action, reward, next_state, done):
-        """Save experience in replay memory, and use random sample from buffer to learn."""
-        # Save experience / reward
-        self.memory.add(state, action, reward, next_state, done)
+        "Save experience and random sample from buffer to learn"
+        # Save experience / reward in replay memory
+        for i in range(len(state)):
+            self.memory.add(state[i, ...], action[i, ...], reward[i],
+                            next_state[i, ...], done[i])
 
         # Learn, if enough samples are available in memory
         if len(self.memory) > BATCH_SIZE:
@@ -74,6 +75,21 @@ class Agent():
 
     def reset(self):
         self.noise.reset()
+
+    def save(self, filename='checkpoint.pth'):
+        "Serialize actor and critic weights"
+        checkpoint = {
+            'actor': self.actor_local.state_dict(),
+            'critic': self.critic_local.state_dict()
+        }
+        torch.save(checkpoint, filename)
+
+    def load(self, filename, map_location=None):
+        "Load weights for actor and critic"
+        weights = torch.load(filename, map_location=map_location)
+        self.actor_local.load_state_dict(weights['actor'])
+        if 'critic' in weights:
+            self.critic_local.load_state_dict(weights['critic'])
 
     def learn(self, experiences, gamma):
         """Update policy and value parameters using given batch of experience tuples.
@@ -137,17 +153,18 @@ class OUNoise:
         self.mu = mu * np.ones(size)
         self.theta = theta
         self.sigma = sigma
-        self.seed = random.seed(seed)
+        self.rng = np.random.RandomState(seed)
         self.reset()
 
     def reset(self):
-        """Reset the internal state (= noise) to mean (mu)."""
-        self.state = copy.copy(self.mu)
+        "Reset the internal state (= noise) to mean (mu)"
+        self.state = 1 * self.mu
 
     def sample(self):
         """Update internal state and return it as a noise sample."""
         x = self.state
-        dx = self.theta * (self.mu - x) + self.sigma * np.array([random.random() for i in range(len(x))])
+        dx = self.rng.randn(len(x)).astype(x.dtype, copy=False)
+        dx = self.theta * (self.mu - x) + self.sigma * dx
         self.state = x + dx
         return self.state
 
