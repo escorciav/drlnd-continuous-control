@@ -18,7 +18,7 @@ The observation space consists of 33 variables corresponding to position, rotati
 
 For this project, we will work with a Unity environment that contains 20 identical agents, each with its own copy of the environment.
 
-This version is useful to test out algorithms that use multiple (non-interacting, parallel) copies of the same agent to distribute the task of gathering experience. In particular, we will review a simplified version of [D4PG](https://openreview.net/pdf?id=SyZipzbCb).
+This version is useful to test out algorithms that use multiple (non-interacting, parallel) copies of the same agent to distribute the task of gathering experience. In particular, we will review an extension of [DDPG](https://arxiv.org/abs/1509.02971).
 
 #### Our challenge
 
